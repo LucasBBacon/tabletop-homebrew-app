@@ -1,0 +1,55 @@
+TDD-Aligned MVP Implementation Plan (Milestones)
+
+Milestone 1: Project Setup & Architecture
+    Set up Git repo and mono-repo structure (backend, frontend).
+    Install FastAPI + Uvicorn + SQLAlchemy + Alembic.
+    Set up PostgreSQL + Docker Compose.
+    Scaffold React frontend with Vite + Tailwind CSS + TypeScript.
+    Write a test for FastAPI root endpoint (GET /api/ping).
+    Create a React smoke test (renders without crashing).
+    Configure GitHub Actions CI pipeline to run tests.
+
+Milestone 2: Authentication & User Profiles
+    Write tests for /register, /login (pytest + FastAPI test client).
+    Implement JWT auth with secure login/register.
+    Build frontend auth pages with form validation (React + Zod).
+    Add protected routes and profile page in React.
+    Write profile update tests and frontend integration.
+
+Milestone 3: Game Directory (CRUD)
+    Write model and tests for Game schema in SQLAlchemy.
+    Build CRUD API endpoints and test them.
+    Create React Game List view (fetch with React Query).
+    Implement Game Detail page with test data.
+    Add admin-only game creation/edit form.
+
+Milestone 4: Event Management
+    Design and test Event model with constraints.
+    Implement and test API endpoints (create/list/delete).
+    Build Events list view and calendar UI.
+    Implement Event detail page and RSVP logic.
+    Write tests for RSVP (including edge cases).
+
+Milestone 5: Community & Feedback
+    Implement comment model and write unit tests.
+    Create comment endpoints (POST, GET, DELETE) with auth.
+    Build comment section component for games/events.
+    Add basic moderation features and admin controls.
+
+Milestone 6: Admin Tools & CMS
+    Protect admin-only endpoints with roles.
+    Build simple Admin Dashboard UI for games/events/comments.
+    Write tests for all admin actions.
+    
+Milestone 7: Site-Wide Features & Polish
+    Add full-text search using PostgreSQL indexes.
+    Implement and test contact form endpoint.
+    Add 404/500 page routes in React.
+    Ensure responsiveness with Tailwind breakpoints.
+
+Milestone 8: Deployment & Analytics
+    Finalize Docker setup for frontend, backend, and DB.
+    Set up GitHub Actions to build and deploy to Vercel/Render.
+    Add Google Analytics or Plausible for basic usage insights.
+    Conduct full E2E test run with Cypress.
+    Launch MVP and begin user feedback collection.

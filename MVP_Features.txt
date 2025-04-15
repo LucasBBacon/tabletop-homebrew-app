@@ -1,0 +1,38 @@
+Core MVP Features
+
+1. Core Website Structure & User Experience
+    Responsive UI: Built with React + Tailwind CSS, ensuring mobile and desktop compatibility.
+    Landing Page: Promotes the platform's value, with featured games/events and CTA buttons.
+    Navigation: React Router-based navigation bar (Home, Games, Events, Community, Login/Profile).
+
+2. User Authentication & Profiles
+    Registration/Login: Auth API via FastAPI, with JWT or secure session tokens. Forms handled with React + Zod for validation.
+    User Profiles: Editable profiles displayed via protected API calls.
+
+3. Games Directory
+    Game Listings: Backend with PostgreSQL, exposed via FastAPI. Frontend uses React Query to fetch and render.
+    Game Detail Pages: Include image, description, genre, ratings.
+    Admin CRUD Interface: Simple admin views for adding/editing/deleting games.
+
+4. Events & Meet-Ups
+    Event Listings: Displayed in calendar and list views. Stored in PostgreSQL, served via FastAPI.
+    Event Detail Pages: Time, description, RSVP button.
+    RSVP Mechanism: Backend tracks RSVPs and prevents duplicate bookings.
+
+5. Community Interaction
+    Comment Sections: Lightweight comments for games/events. Authenticated users only.
+    Moderation Controls: Admin can delete inappropriate comments.
+
+6. Admin & CMS Functions
+    Admin Dashboard: Built in React, secured with role-based access.
+    Content Management: Admin can manage games, events, and comments.
+
+7. Support & Infrastructure
+    Search Bar: Full-text search on games/events using PostgreSQL.
+    Contact/Feedback Form: Submits to FastAPI and stores in DB.
+    Error Handling: Custom 404/500 pages with friendly UI.
+
+8. Deployment & DevOps
+    Dockerized App: FastAPI + PostgreSQL + React served via Nginx or similar.
+    Hosting: Use Render, Railway, or Vercel + Supabase/PostgreSQL.
+    CI/CD: GitHub Actions with full test runs on push.
