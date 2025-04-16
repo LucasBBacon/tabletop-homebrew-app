@@ -3,6 +3,8 @@ from backend.main import app
 
 
 client = TestClient(app)
+if client != None:
+    print("Test client initialized successfully.")
 
 def test_complete_user_flow():
     """

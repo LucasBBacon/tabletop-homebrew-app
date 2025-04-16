@@ -1,12 +1,13 @@
 from fastapi.testclient import TestClient
-from backend.main import app, fake_users_db
+from backend.main import app
+from backend.app.database.crud import fake_users_db
 
 client = TestClient(app)
 
 def test_ping():
     response = client.get("/api/ping")
     assert response.status_code == 200
-    assert response.json() == {"message": "pong"}
+    assert response.json() == {"message": "Pong!"}
 
 
 def test_registration_and_login():

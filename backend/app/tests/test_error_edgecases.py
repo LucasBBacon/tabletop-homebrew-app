@@ -1,6 +1,7 @@
 from datetime import timedelta
 from fastapi.testclient import TestClient
-from backend.main import app, create_access_token
+from backend.app.core.security import create_access_token
+from backend.main import app
 
 
 client = TestClient(app)
