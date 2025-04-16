@@ -16,7 +16,7 @@ def test_complete_user_flow():
         json={
             "username": "integrationuser",
             "email": "integration@example.com",
-            "password": "integrationpassword"
+            "password": "Testpassword123!"
         }
     )
     assert register_response.status_code == 201, f"User registration failed: f{register_response.json()}"
@@ -31,7 +31,7 @@ def test_complete_user_flow():
         "/auth/login",
         data={
             "username": "integrationuser",
-            "password": "integrationpassword"
+            "password": "Testpassword123!"
         }
     )
     assert login_response.status_code == 200, f"User login failed: {login_response.json()}"

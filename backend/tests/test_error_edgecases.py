@@ -41,7 +41,7 @@ def test_duplicate_registration():
     response1 = register_user(
         "dupuser",
         "dupuser@example.com",
-        "dupuserpassword"
+        "Testpassword123!"
     )
     assert response1.status_code == 201, "The first registration should succeed."
 
@@ -49,12 +49,12 @@ def test_duplicate_registration():
     response2 = register_user(
         "dupuser",
         "dupuser@example.com",
-        "dupuserpassword"
+        "Testpassword123!"
     )
     # Expect a 400 Bad Request error, based on route logic checking for existing users
     assert response2.status_code == 400, "Re-gistration with existing username should fail."
     # Optionally verify error message contains reference to duplication
-    assert "already" in response2.json().get("detail", "").lower()\
+    assert "already" in response2.json().get("message").lower()\
         , "Error message should indicate duplication."
 
 # endregion Duplicate registration test

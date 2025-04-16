@@ -19,7 +19,7 @@ def test_registration_and_login():
         json={
             "username": "testuser",
             "email": "test@example.com",
-            "password": "testpassword"
+            "password": "Testpassword123!"
         }
     )
 
@@ -31,7 +31,7 @@ def test_registration_and_login():
         "/auth/login",
         data={
             "username": "testuser",
-            "password": "testpassword"
+            "password": "Testpassword123!"
         }
     )
 
