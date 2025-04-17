@@ -1,12 +1,21 @@
-class settings:
-    APP_NAME = "My FastAPI App"
-    APP_VERSION = "1.0.0"
-    DEBUG = True
-    DATABASE_URL = "sqlite:///./test.db"
-    API_PREFIX = "/api/v1"
-    AUTH_PREFIX = "/auth"
-    USERS_PREFIX = "/users"
+from pydantic_settings import BaseSettings
+
+
+class Settings(BaseSettings):
+    APP_NAME : str = "My FastAPI App"
+    APP_VERSION : str = "1.0.0"
+    DEBUG : bool = True
     
-SECRET_KEY = "waucydelgaucy"
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+    DATABASE_URL : str = "postgresql+psycopg2://myappuser:myappuserpassword@db:5432/tabletop_db"
+
+    SECRET_KEY : str = "your_secret_key"
+    ALGORITHM : str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES : int = 30    
+    
+    AUTH_PREFIX : str = "/auth"
+    USERS_PREFIX : str = "/users"
+    
+    class Config:
+        env_file = ".env"
+    
+settings = Settings()

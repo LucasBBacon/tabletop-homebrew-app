@@ -1,6 +1,5 @@
 from fastapi.testclient import TestClient
 from backend.main import app
-from backend.app.database.crud import fake_users_db
 
 client = TestClient(app)
 
@@ -12,7 +11,6 @@ def test_ping():
 
 def test_registration_and_login():
     # Clear fake database to ensure a clean test environment
-    fake_users_db.clear()
 
     # Register a new user
     registration_response = client.post(

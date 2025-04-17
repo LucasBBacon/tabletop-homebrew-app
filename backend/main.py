@@ -1,3 +1,4 @@
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException
 from fastapi.exceptions import RequestValidationError
 
@@ -9,11 +10,25 @@ from app.exceptions.handlers import (
     validation_exception_handler
     )
 from app.routes import auth, users
+from app.database.database import Base, engine
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """
+    Create the database tables on startup and drop them on shutdown.
+    """
+    # Create the database tables
+    Base.metadata.create_all(bind=engine)
+    yield
+    # Drop the database tables
+    Base.metadata.drop_all(bind=engine)
 
 app = FastAPI(
     title=settings.APP_NAME,
     version=settings.APP_VERSION,
     debug=settings.DEBUG,
+    lifespan=lifespan,
 )
 
 
@@ -23,6 +38,7 @@ app.add_exception_handler(EmailVerificationError, email_verification_exception_h
 
 app.include_router(auth.router, prefix="/auth", tags=["Authentication"])
 app.include_router(users.router, prefix="/users", tags=["Users"])
+
 
 @app.get("/api/ping/", summary="Ping the API")
 async def ping():
