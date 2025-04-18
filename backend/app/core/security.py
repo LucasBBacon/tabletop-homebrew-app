@@ -4,11 +4,13 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from passlib.context import CryptContext
 from jose import JWTError, jwt
+from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.database.crud import get_user_by_username
 from app.schemas.auth import TokenData
 from app.models.user import User as UserORM
+from app.database.database import get_db
 
 
 
@@ -43,7 +45,7 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     return encoded_jwt
 
 
-async def get_current_user(token: str = Depends(oauth2_scheme)) -> UserORM:
+async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)) -> UserORM:
     """
     Get the current user from the token.
     """
@@ -57,12 +59,15 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> UserORM:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
         username: str = payload.get("sub")
         if username is None:
+            print("Username not found in token payload")
             raise credentials_exception
         token_data = TokenData(sub=username)
-    except JWTError:
+    except JWTError as e:
+        print(f"JWT decoding error: {e}")
         raise credentials_exception
     
-    user = get_user_by_username(username=token_data.sub)
+    user = get_user_by_username(db, username=token_data.sub)
     if user is None:
+        print(f"User not found: {token_data.sub}")
         raise credentials_exception
     return user

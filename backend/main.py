@@ -40,7 +40,7 @@ app.include_router(auth.router, prefix="/auth", tags=["Authentication"])
 app.include_router(users.router, prefix="/users", tags=["Users"])
 
 
-@app.get("/api/ping/", summary="Ping the API")
+@app.get("/api/ping", summary="Ping the API")
 async def ping():
     """
     Ping the API to check if it's running.

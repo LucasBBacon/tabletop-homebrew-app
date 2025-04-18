@@ -35,6 +35,7 @@ class UserOut(UserBase):
     updated_at: datetime
     is_active: bool
     is_verified: bool
+    verification_token: Optional[str]
     full_name: Optional[str]
     phone_number: Optional[str]
     

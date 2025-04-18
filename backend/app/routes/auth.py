@@ -120,7 +120,7 @@ def register(user_data: UserCreate, db: Session = Depends(get_db)):
         db, 
         username=user_data.username,
         email=user_data.email, 
-        password=hashed
+        hashed_password=hashed
         )
     return {
         "msg": "User registered successfully",

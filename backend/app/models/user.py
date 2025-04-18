@@ -146,7 +146,7 @@ class User(Base):
         default=False,
         nullable=False,
     )
-    verification_toke = Column(
+    verification_token = Column(
         String(255),
         nullable=True,
     )

@@ -11,6 +11,7 @@ tabletop-homebrew-app/
 ------database/
 --------__init__.py
 --------crud.py
+--------database.py
 ------exceptions/
 --------__init__.py
 --------handlers.py
@@ -21,10 +22,15 @@ tabletop-homebrew-app/
 --------__init__.py
 --------auth.py
 --------users.py
+------schemas/
+--------__init__.py
+--------auth.py
+--------users.py
 ------tests/
 --------__init__.py
 --------test_error_edgecases.py
 --------test_integration.py
+--------test_live_api.py
 --------test_main.py
 --------test_protected_endpoints.py
 --------test_validations.py
