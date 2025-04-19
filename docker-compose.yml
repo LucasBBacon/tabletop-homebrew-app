@@ -13,14 +13,17 @@ services:
       - postgres_data:/var/lib/postgresql/data
 
   backend:
-    build: ./backend
+    build: 
+      context: ./backend
+      args:
+        ENV_FILE_PATH: /tabletop-homebrew-app/.env
     depends_on:
       - db
     ports:
       - "8000:8000"
     environment:
       DATABASE_URL: postgresql+psycopg2://myappuser:myappuserpassword@db:5432/tabletop_db
-      SECRET_KEY: your_secret_key
+      SECRET_KEY: 1VkpOEnIMTNYAJs2vbXdP1W57aGv1OoPeqLVgh6m-wxKntXmiGlzui7LuR-mpsRzWJrk4wQf19tLK23-1JtSJg
     command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 volumes:
   postgres_data:

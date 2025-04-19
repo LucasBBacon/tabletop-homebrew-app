@@ -1,93 +1,21 @@
-# from fastapi import APIRouter, Depends, HTTPException, status
-# from fastapi.security import OAuth2PasswordRequestForm
-
-# from app.core.security import (
-#     create_access_token,
-#     hash_password,
-#     verify_password
-#     )
-# from app.database.crud import (
-#     get_user_by_email, 
-#     get_user_by_username, 
-#     get_user_by_verification_token, 
-#     save_user
-#     )
-# from app.models.user import Token, UserCreate, UserInDB
-
-
-# router = APIRouter()
-
-# @router.post("/register", status_code=status.HTTP_201_CREATED)
-# async def register(user_data: UserCreate):
-#     """
-#     Register a new user.
-#     """
-#     # validate that use does not already exist
-#     exting_user = get_user_by_username(user_data.username)
-#     if exting_user:
-#         raise HTTPException(
-#             status_code=400,
-#             detail="Username already registered"
-#             )
-    
-#     existing_email = get_user_by_email(user_data.email)
-#     if existing_email:
-#         raise HTTPException(
-#             status_code=400,
-#             detail="Email already registered"
-#             )
-
-#     # Hash the password and create the user
-#     hashed = hash_password(user_data.password)
-#     new_user = UserInDB(
-#         username=user_data.username,
-#         email=user_data.email,
-#         hashed_password=hashed
-#     )
-#     save_user(new_user)
-#     return {"msg": "User registered successfully"}
-
-
-# @router.post("/login", response_model=Token)
-# async def login(form_data: OAuth2PasswordRequestForm = Depends()):
-#     """
-#     Login a user and return an access token.
-#     """
-#     user = get_user_by_username(form_data.username)
-#     if not user or not verify_password(form_data.password, user.hashed_password):
-#         raise HTTPException(
-#             status_code=status.HTTP_401_UNAUTHORIZED,
-#             detail="Incorrect username or password",
-#             headers={"WWW-Authenticate": "Bearer"},
-#         )
-#     access_token = create_access_token(data={"sub": user.username})
-#     return {"access_token": access_token, "token_type": "bearer"}
-
-
-# @router.post("/verify-email")
-# async def verify_email(token: str):
-#     user = get_user_by_verification_token(token)
-#     if not user:
-#         raise HTTPException(
-#             status_code=400,
-#             detail="Invalid or expired verification token"
-#         )
-#     user.is_verified = True
-#     save_user(user)
-#     return {
-#         "success": True,
-#         "message": "Email verified successfully",
-#     }
-
+from datetime import timedelta
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
+from jose import jwt
 
+from app.core.config import settings
 from app.database.database import get_db
 from app.schemas.user import UserCreate
-from app.schemas.auth import Token, TokenData
-from app.core.security import create_access_token, hash_password, verify_password
+from app.schemas.auth import Token, TokenPair, TokenRefreshRequest
+from app.core.security import (
+    create_access_token, 
+    hash_password, 
+    verify_password, 
+    oauth2_scheme
+)
 from app.database.crud import (
+    blacklist_token,
     create_user, 
     get_user_by_email, 
     get_user_by_username, 
@@ -127,7 +55,7 @@ def register(user_data: UserCreate, db: Session = Depends(get_db)):
         "id": str(user.id),
     }
     
-@router.post("/login", response_model=Token)
+@router.post("/login", response_model=TokenPair)
 def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
     """
     Login a user and return an access token.
@@ -138,14 +66,47 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username or password",
-            headers={"WWW-Authenticate": "Bearer"},
         )
     # Issue JWT token
     access_token = create_access_token(data={"sub": user.username})
+    refresh_token = create_access_token(
+        data={"sub": user.username}, 
+        expires_delta=timedelta(days=7)
+    )
     return {
-        "access_token": access_token, 
+        "access_token": access_token,
+        "refresh_token": refresh_token,
         "token_type": "bearer"
-        }
+    }
+    
+@router.post("/refresh-token", response_model=Token)
+def refresh_token(token_data: TokenRefreshRequest):
+    try:
+        payload = jwt.decode(
+            token_data.refresh_token,
+            settings.SECRET_KEY,
+            algorithms=[settings.ALGORITHM]
+        )
+        username = payload.get("sub")
+        if username is None:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid token",
+            )
+    except jwt.JWTError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token",
+        )
+    
+    new_access_token = create_access_token(
+        data={"sub": username},
+        expires_delta=timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    )
+    return {
+        "access_token": new_access_token,
+        "token_type": "bearer"
+    }
 
 @router.post("/verify-email")
 def verify_email(token: str, db: Session = Depends(get_db)):
@@ -168,4 +129,12 @@ def verify_email(token: str, db: Session = Depends(get_db)):
     return {
         "success": True,
         "message": "Email verified successfully",
+    }
+    
+@router.post("/logout")
+def logout(current_token: str = Depends(oauth2_scheme)):
+    blacklist_token(current_token)
+    return {
+        "success": True,
+        "message": "Logged out successfully",
     }

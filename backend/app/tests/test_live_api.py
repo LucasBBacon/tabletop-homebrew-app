@@ -231,3 +231,98 @@ def test_verify_email_invalid_token():
     err = r.json()
     assert err["success"] is False
     assert err["message"] == "Invalid or expired verification token"
+    
+@pytest.mark.order(10)
+def test_login_and_refresh_flow():
+    """
+    Test the login and refresh token flow.
+    """
+    # Register and login a user
+    payload = {
+        "username": "loginrefreshuser",
+        "email": "loginrefresh@test.com",
+        "password": "TestPassword!123"
+    }
+    r = httpx.post(f"{BASE_URL}/auth/register", json=payload)
+    assert r.status_code == 201
+    data = {
+        "username": "loginrefreshuser",
+        "password": "TestPassword!123"
+    }
+    r = httpx.post(f"{BASE_URL}/auth/login", data=data)
+    assert r.status_code == 200
+    token_data = r.json()
+    access_token = token_data["access_token"]
+    refresh_token = token_data["refresh_token"]
+    assert access_token
+    assert refresh_token
+    # Check if the access token is valid
+    headers = {"Authorization": f"Bearer {access_token}"}
+    r = httpx.get(f"{BASE_URL}/users/profile", headers=headers)
+    assert r.status_code == 200
+    # Check if the refresh token is valid
+    r = httpx.post(
+        f"{BASE_URL}/auth/refresh-token",
+        headers=headers,
+        json={"refresh_token": refresh_token}
+    )
+    assert r.status_code == 200
+    new_access_token = r.json()["access_token"]
+    assert new_access_token
+    assert new_access_token != access_token
+    # Check if the new access token is valid
+    headers = {"Authorization": f"Bearer {new_access_token}"}
+    r = httpx.get(f"{BASE_URL}/users/profile", headers=headers)
+    assert r.status_code == 200
+
+
+@pytest.mark.order(11)
+def test_refresh_with_invalid_token():
+    """
+    Test the refresh token with an invalid token.
+    """
+    # Invalid token
+    r = httpx.post(
+        f"{BASE_URL}/auth/refresh-token",
+        json={"refresh_token": "invalid.token"}
+    )
+    assert r.status_code == 401
+    err = r.json()
+    assert err["success"] is False
+    assert err["error_code"] == "HTTP_ERROR"
+    
+@pytest.mark.order(12)
+def test_logout_and_revoked_behaviour():
+    """
+    Test the logout and revoked token behavior.
+    """
+    # Register and login a user
+    payload = {
+        "username": "logoutrevokeduser",
+        "email": "logoutuser@test.com",
+        "password": "TestPassword!123"
+    }
+    r = httpx.post(f"{BASE_URL}/auth/register", json=payload)
+    assert r.status_code == 201
+    r = httpx.post(
+        f"{BASE_URL}/auth/login",
+        data={
+            "username": "logoutrevokeduser",
+            "password": "TestPassword!123"
+    })
+    assert r.status_code == 200
+    access_token = r.json()["access_token"]
+    # Access protected resource with valid token
+    headers = {"Authorization": f"Bearer {access_token}"}
+    r = httpx.get(f"{BASE_URL}/users/profile", headers=headers)
+    assert r.status_code == 200
+    # Logout
+    r = httpx.post(f"{BASE_URL}/auth/logout", headers=headers)
+    assert r.status_code == 200
+    assert r.json()["success"] is True
+    # Attempt to access protected resource with revoked token
+    r = httpx.get(f"{BASE_URL}/users/profile", headers=headers)
+    assert r.status_code == 401
+    err = r.json()
+    assert err["success"] is False
+    assert err["error_code"] == "HTTP_ERROR"

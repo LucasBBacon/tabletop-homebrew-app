@@ -1,19 +1,21 @@
+import os
 from pydantic_settings import BaseSettings
+from dotenv import load_dotenv
 
+load_dotenv(dotenv_path=os.getenv("ENV_FILE_PATH", ".env"))
 
 class Settings(BaseSettings):
     APP_NAME : str = "My FastAPI App"
-    APP_VERSION : str = "1.0.0"
-    DEBUG : bool = True
-    
-    DATABASE_URL : str = "postgresql+psycopg2://myappuser:myappuserpassword@db:5432/tabletop_db"
-
-    SECRET_KEY : str = "your_secret_key"
+    APP_VERSION : str = "1.0.0"    
     ALGORITHM : str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES : int = 30    
+    DATABASE_URL : str
+    SECRET_KEY : str
+    ACCESS_TOKEN_EXPIRE_MINUTES : int
+    DEBUG : bool
+
+    AUTH_PREFIX : str
+    USERS_PREFIX : str
     
-    AUTH_PREFIX : str = "/auth"
-    USERS_PREFIX : str = "/users"
     
     class Config:
         env_file = ".env"

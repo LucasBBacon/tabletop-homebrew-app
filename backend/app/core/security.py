@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 from typing import Optional
+from uuid import uuid4
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from passlib.context import CryptContext
@@ -7,7 +8,7 @@ from jose import JWTError, jwt
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
-from app.database.crud import get_user_by_username
+from app.database.crud import get_user_by_username, is_token_blacklisted
 from app.schemas.auth import TokenData
 from app.models.user import User as UserORM
 from app.database.database import get_db
@@ -38,9 +39,13 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     Create an access token with an expiration time.
     """
     to_encode = data.copy()
-    now = datetime.astimezone(datetime.now())
+    now = datetime.now()
     expire = now + (expires_delta if expires_delta else timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES))
-    to_encode.update({"iat": now, "exp": expire})
+    to_encode.update({
+        "iat": now.timestamp(), 
+        "exp": expire.timestamp(),
+        "jti": str(uuid4())
+    })
     encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
     return encoded_jwt
 
@@ -49,6 +54,11 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = De
     """
     Get the current user from the token.
     """
+    if is_token_blacklisted(token):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token has been revoked",
+        )
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
