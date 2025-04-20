@@ -1,3 +1,5 @@
+# app/schemas/user.py
+
 from datetime import datetime
 from typing import Optional
 from uuid import UUID
@@ -25,9 +27,16 @@ class UserUpdate(BaseModel):
         None,
         min_length=3,
         max_length=50,
+        description="New username of the user",
     )
-    email: Optional[EmailStr] = None
-    is_verified: Optional[bool] = None
+    email: Optional[EmailStr] = Field(
+        None,
+        description="New email of the user",
+    )
+    is_verified: Optional[bool] = Field(
+        None,
+        description="Mark the user as verified or not (admin use)",
+    )
     
 class UserOut(UserBase):
     id: UUID

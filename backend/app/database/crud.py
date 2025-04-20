@@ -1,32 +1,8 @@
-from typing import Optional
+# app/database/crud.py
+
 from uuid import uuid4
 
-from app.models.user import User
 from app.models.user import User as UserORM
-
-# fake_users_db = {}
-
-# def get_user_by_username(username: str) -> Optional[UserInDB]:
-#     return fake_users_db.get(username)
-
-
-# def get_user_by_email(email: str) -> Optional[UserInDB]:
-#     for user in fake_users_db.values():
-#         if user.email == email:
-#             return user
-#     return None
-
-
-# def get_user_by_verification_token(token: str) -> Optional[UserInDB]:
-#     for user in fake_users_db.values():
-#         if user.verification_token == token:
-#             return user
-#     return None
-
-
-# def save_user(user: UserInDB):
-#     fake_users_db[user.username] = user
-
 from sqlalchemy.orm import Session
 
 def get_user_by_username(db: Session, username: str) -> UserORM | None:

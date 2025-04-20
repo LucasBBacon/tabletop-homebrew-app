@@ -21,9 +21,12 @@ services:
       - db
     ports:
       - "8000:8000"
-    environment:
-      DATABASE_URL: postgresql+psycopg2://myappuser:myappuserpassword@db:5432/tabletop_db
-      SECRET_KEY: 1VkpOEnIMTNYAJs2vbXdP1W57aGv1OoPeqLVgh6m-wxKntXmiGlzui7LuR-mpsRzWJrk4wQf19tLK23-1JtSJg
     command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+  
+  redis:
+    image: redis:latest
+    restart: always
+    ports:
+      - "6379:6379"
 volumes:
   postgres_data:

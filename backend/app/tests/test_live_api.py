@@ -326,3 +326,69 @@ def test_logout_and_revoked_behaviour():
     err = r.json()
     assert err["success"] is False
     assert err["error_code"] == "HTTP_ERROR"
+    
+@pytest.mark.order(13)
+def test_full_token_lifecycle():
+    """
+    Test the full token life cycle: registration, login, refresh, and logout.
+    """
+    # Register and login new user
+    payload = {
+        "username": "fullflowuser",
+        "email": "fullflow@test.com",
+        "password": "TestPassword!123"
+    }
+    r = httpx.post(f"{BASE_URL}/auth/register", json=payload)
+    assert r.status_code == 201
+    
+    r = httpx.post(
+        f"{BASE_URL}/auth/login",
+        data={
+            "username": "fullflowuser",
+            "password": "TestPassword!123"
+    })
+    assert r.status_code == 200
+    tokens = r.json()
+    access_token = tokens["access_token"]
+    refresh_token = tokens["refresh_token"]
+    
+    # Access protected resource with valid token
+    headers = {"Authorization": f"Bearer {access_token}"}
+    r = httpx.get(f"{BASE_URL}/users/profile", headers=headers)
+    assert r.status_code == 200
+    assert r.json()["username"] == "fullflowuser"
+    
+    # Refresh token
+    r = httpx.post(
+        f"{BASE_URL}/auth/refresh-token",
+        headers=headers,
+        json={"refresh_token": refresh_token}
+    )
+    assert r.status_code == 200
+    new_access_token = r.json()["access_token"]
+    assert new_access_token != access_token
+    
+    # Access protected resource with new access token
+    headers = {"Authorization": f"Bearer {new_access_token}"}
+    r = httpx.get(f"{BASE_URL}/users/profile", headers=headers)
+    assert r.status_code == 200
+    assert r.json()["username"] == "fullflowuser"
+    
+    # Logout
+    r = httpx.post(
+        f"{BASE_URL}/auth/logout",
+        headers=headers,
+        json={"refresh_token": refresh_token}
+    )
+    assert r.status_code == 200
+    
+    # Attempt to access protected resource with revoked token
+    r = httpx.get(f"{BASE_URL}/users/profile", headers=headers)
+    assert r.status_code == 401
+    
+    # Attempt to refresh token after logout
+    r = httpx.post(
+        f"{BASE_URL}/auth/refresh-token",
+        json={"refresh_token": refresh_token}
+    )
+    assert r.status_code == 401

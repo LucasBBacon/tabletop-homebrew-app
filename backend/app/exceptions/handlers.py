@@ -1,3 +1,5 @@
+# app/exceptions/handlers.py
+
 """
 Custom exception handlers for the FastAPI application.
 Standard response schema is defined for consistency.
@@ -12,6 +14,8 @@ Standard response schema is defined for consistency.
 from fastapi import HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+
+from app.core.messages import INTERNAL_SERVER_ERROR
 
 
 
@@ -100,7 +104,7 @@ async def generic_exception_handler(request: Request, exc: Exception):
         content={
             "success": False,
             "error_code": "INTERNAL_SERVER_ERROR",
-            "message": "An unexpected error occurred.",
+            "message": INTERNAL_SERVER_ERROR,
             "detail": str(exc),
         },
     )

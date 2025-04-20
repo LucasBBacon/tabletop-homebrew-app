@@ -14,3 +14,4 @@ httpx==0.24.1
 psycopg2-binary==2.9.6
 SQLAlchemy==2.0.40
 typing-inspection==0.4.0
+redis==5.2.1

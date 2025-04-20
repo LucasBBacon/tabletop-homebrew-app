@@ -1,3 +1,5 @@
+# backend/main.py
+
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException
 from fastapi.exceptions import RequestValidationError
@@ -13,6 +15,28 @@ from app.exceptions.handlers import (
 from app.routes import auth, users
 from app.database.database import Base, engine
 
+
+def custom_openapi():
+    """
+    Custom OpenAPI schema generation.
+    """
+    if app.openapi_schema:
+        return app.openapi_schema
+    openapi_schema = app.openapi(
+        title=settings.APP_NAME, 
+        version=settings.APP_VERSION,
+        description="Authentication and User Management API",
+        routes=app.routes,
+    )
+    openapi_schema["components"]["securitySchemes"] = {
+        "BearerAuth": {
+            "type": "http",
+            "scheme": "bearer",
+            "bearerFormat": "JWT",
+        }
+    }
+    app.openapi_schema = openapi_schema
+    return app.openapi_schema
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -36,6 +60,8 @@ app = FastAPI(
 origins = [
     "http://localhost:3000",
 ]
+
+app.openapi = custom_openapi
 
 app.add_middleware(
     CORSMiddleware,

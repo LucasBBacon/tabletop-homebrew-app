@@ -1,3 +1,5 @@
+# app/routes/auth.py
+
 from datetime import timedelta
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
@@ -15,12 +17,19 @@ from app.core.security import (
     oauth2_scheme
 )
 from app.database.crud import (
-    blacklist_token,
     create_user, 
     get_user_by_email, 
     get_user_by_username, 
     get_user_by_verification_token, 
     update_user
+)
+from app.core.redis import blacklist_token, is_token_blacklisted
+from app.core.messages import (
+    EMAIL_ALREADY_REGISTERED, 
+    INVALID_CREDENTIALS,
+    INVALID_TOKEN,
+    REFRESH_TOKEN_REVOKED, 
+    USERNAME_ALREADY_REGISTERED
 )
 
 
@@ -35,12 +44,12 @@ def register(user_data: UserCreate, db: Session = Depends(get_db)):
     if get_user_by_username(db, user_data.username):
         raise HTTPException(
             status.HTTP_400_BAD_REQUEST, 
-            "Username already registered"
+            USERNAME_ALREADY_REGISTERED
             )
     if get_user_by_email(db, user_data.email):
         raise HTTPException(
             status.HTTP_400_BAD_REQUEST, 
-            "Email already registered"
+            EMAIL_ALREADY_REGISTERED
             )
     # Hash the password and create the user
     hashed = hash_password(user_data.password)
@@ -65,13 +74,14 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
     if not user or not verify_password(form_data.password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect username or password",
+            detail=INVALID_CREDENTIALS,
         )
     # Issue JWT token
     access_token = create_access_token(data={"sub": user.username})
     refresh_token = create_access_token(
         data={"sub": user.username}, 
-        expires_delta=timedelta(days=7)
+        expires_delta=timedelta(days=7),
+        token_type="refresh"
     )
     return {
         "access_token": access_token,
@@ -81,6 +91,14 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
     
 @router.post("/refresh-token", response_model=Token)
 def refresh_token(token_data: TokenRefreshRequest):
+    """
+    Refresh the access token using a valid refresh token.
+    """
+    if is_token_blacklisted(token_data.refresh_token):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=REFRESH_TOKEN_REVOKED,
+        )
     try:
         payload = jwt.decode(
             token_data.refresh_token,
@@ -91,12 +109,12 @@ def refresh_token(token_data: TokenRefreshRequest):
         if username is None:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid token",
+                detail=INVALID_TOKEN,
             )
     except jwt.JWTError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid token",
+            detail=INVALID_TOKEN,
         )
     
     new_access_token = create_access_token(
@@ -118,7 +136,7 @@ def verify_email(token: str, db: Session = Depends(get_db)):
     if not user:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid or expired verification token"
+            detail=INVALID_TOKEN,
         )
     # Update user verification status
     user = update_user(
@@ -132,8 +150,18 @@ def verify_email(token: str, db: Session = Depends(get_db)):
     }
     
 @router.post("/logout")
-def logout(current_token: str = Depends(oauth2_scheme)):
+def logout(
+    current_token: str = Depends(oauth2_scheme),
+    refresh_token_payload: TokenRefreshRequest = None
+):
+    """
+    Logout a user by blacklisting the access token and refresh token.
+    """
+    # Blacklist the access token
     blacklist_token(current_token)
+    # If a refresh token is provided, blacklist it as well
+    if refresh_token_payload and refresh_token_payload.refresh_token:
+        blacklist_token(refresh_token_payload.refresh_token)
     return {
         "success": True,
         "message": "Logged out successfully",

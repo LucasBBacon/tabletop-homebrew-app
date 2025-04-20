@@ -8,6 +8,7 @@ tabletop-homebrew-app/
 --------__init__.py
 --------config.py
 --------security.py
+--------redis.py
 ------database/
 --------__init__.py
 --------crud.py
@@ -25,7 +26,7 @@ tabletop-homebrew-app/
 ------schemas/
 --------__init__.py
 --------auth.py
---------users.py
+--------user.py
 ------tests/
 --------__init__.py
 --------test_error_edgecases.py
@@ -36,6 +37,8 @@ tabletop-homebrew-app/
 --------test_validations.py
 ------__init__.py
 ----__init__.py
+----.env
+----Dockerfile
 ----main.py
 ----requirements.txt
 --frontend/

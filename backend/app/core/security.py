@@ -1,3 +1,5 @@
+# app/core/security.py
+
 from datetime import datetime, timedelta
 from typing import Optional
 from uuid import uuid4
@@ -8,7 +10,8 @@ from jose import JWTError, jwt
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
-from app.database.crud import get_user_by_username, is_token_blacklisted
+from app.database.crud import get_user_by_username
+from app.core.redis import is_token_blacklisted
 from app.schemas.auth import TokenData
 from app.models.user import User as UserORM
 from app.database.database import get_db
@@ -34,7 +37,11 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)
 
 
-def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
+def create_access_token(
+    data: dict, 
+    expires_delta: Optional[timedelta] = None,
+    token_type: str = "access"
+):
     """
     Create an access token with an expiration time.
     """
@@ -44,7 +51,8 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     to_encode.update({
         "iat": now.timestamp(), 
         "exp": expire.timestamp(),
-        "jti": str(uuid4())
+        "jti": str(uuid4()),
+        "type": token_type
     })
     encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
     return encoded_jwt
